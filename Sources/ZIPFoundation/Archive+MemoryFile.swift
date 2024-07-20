@@ -31,8 +31,8 @@ extension Archive {
             let cookie = Unmanaged.passRetained(self)
             #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Android)
             let result = mode.isWritable
-                ? funopen(cookie.toOpaque(), readStub, writeStub, seekStub, closeStub)!
-                : funopen(cookie.toOpaque(), readStub, nil, seekStub, closeStub)!
+            ? funopen(cookie.toOpaque(), {cookie, bytePtr, count in readStub(cookie, bytePtr, count)}, {cookie, bytePtr, count in  writeStub(cookie, bytePtr, count)}, {cookie, offset, whence in seekStub(cookie, offset, whence)}, {cookie in closeStub(cookie)})!
+            : funopen(cookie.toOpaque(), {cookie, bytePtr, count in readStub(cookie, bytePtr, count)}, nil, {cookie, offset, whence in seekStub(cookie, offset, whence)}, {cookie in closeStub(cookie)})!
             #else
             let stubs = cookie_io_functions_t(read: readStub, write: writeStub, seek: seekStub, close: closeStub)
             let result = fopencookie(cookie.toOpaque(), mode.posixMode, stubs)!
